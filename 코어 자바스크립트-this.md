@@ -246,7 +246,6 @@ console.log(elements); // HTMLCollection(2) [div.example, div.example]
 
 4. 문자열
 5. 등
-여기에 네모 테두리 박스 안에 들어갈 내용을 작성하세요.
 </div>
 </details>
 

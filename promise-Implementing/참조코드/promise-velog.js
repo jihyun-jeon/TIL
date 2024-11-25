@@ -4,7 +4,7 @@
 // https://velog.io/@turtle601/JS-%EC%9E%90%EB%B0%94%EC%8A%A4%ED%81%AC%EB%A6%BD%ED%8A%B8-Promise-%EA%B0%9D%EC%B2%B4-%EC%A7%81%EC%A0%91-%EA%B5%AC%ED%98%84%ED%95%B4%EB%B3%B4%EA%B8%B0
 
 const PROMISES_STATE = Object.freeze({
-  pending: "PENDING",
+  pending: "pending",
   fulfilled: "fulfilled",
   rejected: "rejected",
 });

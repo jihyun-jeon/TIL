@@ -34,14 +34,6 @@ class MyPromise_<T> {
   update(updateState: PROMISES_STATE_, value?: T) {
     queueMicrotask(() => {
       if (this.state !== PROMISES_STATE_.pending) return;
-
-      // [TODO] Promise 안에서 Promise 리턴 하는 경우 <- 잘 이해가 안되서 일단 스킵
-      // value가 프로미스 인스턴스 객체인지 확인
-      // if (value instanceof MyPromise_) {
-      //   value.then(this.resolve.bind(this), this.reject.bind(this));
-      //   return;
-      // }
-
       this.state = updateState;
       this.value = value;
       this.runCallbacks();
@@ -59,29 +51,31 @@ class MyPromise_<T> {
   }
 
   then<U>(
-    thenCallback?: (x: T) => MyPromise_<U>,
-    catchCallback?: (ex: any) => MyPromise_<U>
+    thenCallback?: (x: T) => MyPromise_<U> | Promise<U>,
+    catchCallback?: (ex: any) => MyPromise_<U> | Promise<U>
   ): MyPromise_<U> {
     return new MyPromise_<U>((resolve, reject) => {
-      this.thenCallbacks.push((value) => {
+      this.thenCallbacks.push(async (value) => {
         if (!thenCallback) {
-          resolve(value);
+          resolve(value as unknown as U);
           return;
         }
         try {
-          resolve(thenCallback(value));
+          const v = await thenCallback(value);
+          resolve(v);
         } catch (error) {
           reject(error);
         }
       });
 
-      this.catchCallbacks.push((value) => {
+      this.catchCallbacks.push(async (value) => {
         if (!catchCallback) {
           reject(value);
           return;
         }
         try {
-          resolve(catchCallback(value));
+          const v = await catchCallback(value);
+          resolve(v);
         } catch (error) {
           reject(error);
         }
@@ -89,7 +83,9 @@ class MyPromise_<T> {
     });
   }
 
-  catch<U>(catchCallback: (ex: any) => MyPromise_<U>): MyPromise_<U> {
+  catch<U>(
+    catchCallback: (ex: any) => MyPromise_<U> | Promise<U>
+  ): MyPromise_<U> {
     return this.then(undefined, catchCallback);
   }
 
@@ -125,5 +121,13 @@ promise
   })
   .then(async (result) => {
     console.log("then-2", result); // ✔️  "Succuess1"
+    throw new Error();
+  })
+  .then(async (result) => {
+    console.log("catch-1", result);
+    throw "성공2";
+  })
+  .catch(async (result) => {
+    console.log("then-3", result); // ✔️ Error
     return "성공4";
   });

@@ -4,7 +4,7 @@
 function map<T, U>(
   arr: T[],
   callback: (el: T, index: number, originalArr: T[]) => U,
-  thisArg?
+  thisArg?: any
 ): U[] {
   const result: U[] = [];
 

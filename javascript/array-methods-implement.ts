@@ -77,6 +77,9 @@ function flatMapToMap<T, U>(
 console.log(flatMap([1, 2, 3], (n) => [n, n * 2])); // [1, 2, 2, 4, 3, 6]
 console.log(flatMapToMap([1, 2, 3], (n) => [n, n * 2])); // [ [ 1, 2 ], [ 2, 4 ], [ 3, 6 ] ]
 
+// 5. flatMap 활용 : filter하기
+[1, 2, 3].flatMap((n) => (n > 2 ? [n] : [])); // [3]
+
 /*
 [노트]
 

@@ -1,4 +1,4 @@
-// 리액트 요소 만들기 1
+/* 리액트 요소 만들기 1*/
 function createElement(type, props, ...children) {
   return {
     type,
@@ -11,7 +11,7 @@ function createElement(type, props, ...children) {
   };
 }
 
-// 리액트 요소 만들기 2 : children이 텍스트면 객체로 만들기 위한 툴
+/* 리액트 요소 만들기 2 : children이 텍스트면 객체로 만들기 위한 툴*/
 function createTextElement(text) {
   return {
     type: "TEXT_ELEMENT",
@@ -22,8 +22,8 @@ function createTextElement(text) {
   };
 }
 
+/* DOM 요소를 생성 */
 function createDom(fiber) {
-  // DOM 요소를 생성. 텍스트 요소는 텍스트 노드를 생성하고, 그 외의 요소는 해당 태그를 생성
   const dom =
     fiber.type == "TEXT_ELEMENT"
       ? document.createTextNode("")
@@ -35,22 +35,14 @@ function createDom(fiber) {
   return dom;
 }
 
+/* 재조정 위한 툴 */
 const isEvent = (key) => key.startsWith("on"); // 이벤트 속성인지 확인
 const isProperty = (key) => key !== "children" && !isEvent(key); // 일반 속성인지 확인
 const isNew = (prev, next) => (key) => prev[key] !== next[key]; // 이전과 다른 속성인지 확인
 const isGone = (prev, next) => (key) => !(key in next); // 삭제된 속성인지 확인
 
-// 재조정 - 이전 이후 돔트리 비교해서, dom 추가/삭제/수정
+/* 재조정 - 이전 이후 돔트리 비교해서, 이벤트,속성 수정 */
 function updateDom(dom, prevProps, nextProps) {
-  // 기존에 있던 이벤트 리스너 제거
-  Object.keys(prevProps || {})
-    .filter(isEvent)
-    .filter((key) => !(key in nextProps) || isNew(prevProps, nextProps)(key))
-    .forEach((name) => {
-      const eventType = name.toLowerCase().substring(2);
-      dom.removeEventListener(eventType, prevProps[name]);
-    });
-
   // 기존에 있던 속성 제거
   Object.keys(prevProps || {})
     .filter(isProperty)
@@ -67,6 +59,15 @@ function updateDom(dom, prevProps, nextProps) {
       dom[name] = nextProps[name];
     });
 
+  // 기존에 있던 이벤트 리스너 제거
+  Object.keys(prevProps || {})
+    .filter(isEvent)
+    .filter((key) => !(key in nextProps) || isNew(prevProps, nextProps)(key))
+    .forEach((name) => {
+      const eventType = name.toLowerCase().substring(2);
+      dom.removeEventListener(eventType, prevProps[name]);
+    });
+
   // 새로운 이벤트 리스너 추가
   Object.keys(nextProps || {})
     .filter(isEvent)
@@ -77,14 +78,26 @@ function updateDom(dom, prevProps, nextProps) {
     });
 }
 
+/* 재조정 - DOM에서 요소를 삭제 */
+function commitDeletion(fiber, domParent) {
+  if (fiber.dom) {
+    domParent.removeChild(fiber.dom);
+  } else {
+    commitDeletion(fiber.child, domParent); // 자식 요소로 내려가서 삭제
+  }
+}
+
+/* fiber tree를 가지고 최종 렌더링 작업 실행 */
 function commitRoot() {
-  // 최종적으로 렌더링 작업을 실행
   deletions.forEach(commitWork);
+
   commitWork(wipRoot.child);
   currentRoot = wipRoot;
   wipRoot = null;
+  console.log("currentRoot", currentRoot);
 }
 
+/* dom tree 최종 렌더 - dom요소 생성,삭제,수정 */
 function commitWork(fiber) {
   if (!fiber) {
     return;
@@ -110,18 +123,9 @@ function commitWork(fiber) {
   commitWork(fiber.sibling);
 }
 
-function commitDeletion(fiber, domParent) {
-  // DOM에서 요소를 삭제
-  if (fiber.dom) {
-    domParent.removeChild(fiber.dom);
-  } else {
-    commitDeletion(fiber.child, domParent); // 자식 요소로 내려가서 삭제
-  }
-}
-
 function render(element, container) {
   wipRoot = {
-    dom: container,
+    dom: container, // #root
     props: {
       children: [element],
     },
@@ -136,14 +140,15 @@ let currentRoot = null;
 let wipRoot = null;
 let deletions = null; // []
 
+/* idle 상태일때 실행 될 함수 */
 function workLoop(deadline) {
   let shouldYield = false;
 
   while (nextUnitOfWork && !shouldYield) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork); // 한 단위 작업 처리
-    // nextUnitOfWork - div{type: ƒ Counter(), parent : root}
 
-    shouldYield = deadline.timeRemaining() < 1; // 시간이 부족하면 작업을 멈추고 나중에 다시 시작
+    shouldYield = deadline.timeRemaining() < 1;
+    // 시간이 부족하면 작업을 멈추고 나중에 다시 시작
   }
 
   if (!nextUnitOfWork && wipRoot) {
@@ -155,24 +160,15 @@ function workLoop(deadline) {
 
 window.requestIdleCallback(workLoop);
 
-/*
-fiber
-{
-    dom: #root,
-    props: {
-      children: [{div..}],
-    },
-    alternate: currentRoot,
-  }
-*/
+/* fiber 작업단위 생성 - idle 상태일때 실행 */
 function performUnitOfWork(fiber) {
-  // 함수형 컴포넌트일 경우 업데이트 함수 호출
   const isFunctionComponent = fiber.type instanceof Function;
   if (isFunctionComponent) {
     updateFunctionComponent(fiber);
   } else {
-    updateHostComponent(fiber); // 일반 컴포넌트 업데이트
+    updateHostComponent(fiber);
   }
+
   if (fiber.child) {
     return fiber.child; // 자식이 있으면 자식으로 이동
   }
@@ -188,58 +184,30 @@ function performUnitOfWork(fiber) {
 let wipFiber = null;
 let hookIndex = null;
 
+/* performUnitOfWork에서 - 현 파이버가 함수일때 */
 function updateFunctionComponent(fiber) {
   wipFiber = fiber;
   hookIndex = 0;
   wipFiber.hooks = [];
-  const children = [fiber.type(fiber.props)]; // 함수형 컴포넌트의 children을 계산
+  // {type: f Counter , hooks : {state:1 , queue:[(c)=>c+1]}}
+  const children = [fiber.type(fiber.props)]; // 함수형 컴포넌트의 children을 계산 // useState()
   reconcileChildren(fiber, children); // 자식 컴포넌트 처리
 }
 
-function useState(initial) {
-  // useState 훅 처리
-  const oldHook =
-    wipFiber.alternate &&
-    wipFiber.alternate.hooks &&
-    wipFiber.alternate.hooks[hookIndex];
-  const hook = {
-    state: oldHook ? oldHook.state : initial,
-    queue: [],
-  };
-
-  const actions = oldHook ? oldHook.queue : [];
-  actions.forEach((action) => {
-    hook.state = action(hook.state); // state 업데이트
-  });
-
-  const setState = (action) => {
-    hook.queue.push(action);
-    wipRoot = {
-      dom: currentRoot.dom,
-      props: currentRoot.props,
-      alternate: currentRoot,
-    };
-    nextUnitOfWork = wipRoot;
-    deletions = [];
-  };
-
-  wipFiber.hooks.push(hook);
-  hookIndex++;
-  return [hook.state, setState];
-}
-
+/* performUnitOfWork에서 - 현 파이버의 dom요소 생성*/
 function updateHostComponent(fiber) {
-  // 호스트 컴포넌트 처리
   if (!fiber.dom) {
-    fiber.dom = createDom(fiber); // DOM 요소 생성
+    fiber.dom = createDom(fiber);
   }
-  reconcileChildren(fiber, fiber.props?.children); // 자식 컴포넌트 처리
-  //children {type: 'div',child:[]}
+
+  reconcileChildren(fiber, fiber.props?.children);
 }
 
+/* 현 파이버의 부모,자식,형제 관계 형성 */
 function reconcileChildren(wipFiber, elements) {
   let index = 0;
-  let oldFiber = wipFiber.alternate && wipFiber.alternate.child; //null
+  let oldFiber = wipFiber.alternate && wipFiber.alternate.child; //null , {type : ƒ Counter()} }
+
   let prevSibling = null;
 
   // 새로운 요소와 기존 요소를 비교하여 차례대로 처리
@@ -292,82 +260,82 @@ function reconcileChildren(wipFiber, elements) {
   }
 }
 
+function useState(initial) {
+  const oldHook =
+    wipFiber.alternate &&
+    wipFiber.alternate.hooks &&
+    wipFiber.alternate.hooks[hookIndex];
+
+  const hook = {
+    state: oldHook ? oldHook.state : initial,
+    queue: [],
+  };
+
+  const actions = oldHook ? oldHook.queue : [];
+  actions.forEach((action) => {
+    hook.state = action(hook.state); // state 업데이트
+  });
+
+  // action을 setState에 저장해놓고, 다음 리렌더링시 useState 실행하면서, action실행됨 -> state 업데이트 되고 -> update fiber 형성
+  const setState = (action) => {
+    hook.queue.push(action);
+    // 새로 만든 wipRoot와 이전 wipRoot(alternate)를 비교해서 -> 리렌더링
+    wipRoot = {
+      dom: currentRoot.dom,
+      props: currentRoot.props, // children <- old와 비교대상
+      alternate: currentRoot, // old fiber tree가 됨 ({#root , ...전체})
+    };
+    nextUnitOfWork = wipRoot;
+    deletions = [];
+  };
+
+  wipFiber.hooks.push(hook);
+  hookIndex++;
+  return [hook.state, setState];
+}
+
 const Didact = {
   createElement,
   render,
   useState,
 };
 
-// -------------------------------------------------------
-// /** @jsx Didact.createElement */
 /** @jsxRuntime classic /
-  /* @jsx Didact.createElement */
+/* @jsx Didact.createElement */
 
-// <실행1> - 컴포넌트 렌더
-// https://github.com/pomber/didact/issues/13
+// -------------------------------------------------------
+
+// <실행1> - useState
+/*
 function Counter() {
   const [state, setState] = Didact.useState(1);
-  return <h1 onClick={() => setState((c) => c + 1)}>My Count: {state}</h1>;
-  // return Didact.createElement(
-  //   "h1",
-  //   {
-  //     onClick: () => setState((c) => c + 1),
-  //     style: {
-  //       backgroundColor: "lightblue",
-  //     },
-  //   },
-  //   `Count: ${state}`
-  // );
-}
-
-const element = <Counter />;
-// const element = Didact.createElement(Counter);
-const container = document.getElementById("root");
-Didact.render(element, container);
-
-// <실행2>
-/*
-const container = document.getElementById("root");
-
-Didact.render(
-  Didact.createElement("div", undefined, {
-    children: [
-      Didact.createElement("h1", undefined, {
-        children: [Didact.createElement("p"), Didact.createElement("a")],
-      }),
-      Didact.createElement("h2"),
-    ],
-  }),
-  container
-);
-*/
-/*
-element
-{
-  type: 'div',
-  props: {
-    children: [
-      {
-        type: 'h1',
-        props: {
-          children: [
-            { type: 'p' },
-            { type: 'a' }
-          ]
-        }
-      },
-      { type: 'h2' }
-    ]
-  }
-}
-
-<div>
-    <h1>
-      <p></p> <a></a>  
+  // const [state2, setState2] = Didact.useState(0);
+  return (
+    <h1
+      onClick={() => {
+        setState((c) => c + 1);
+      }}
+    >
+      My Count: {state}
     </h1>
-    <h2></h2>
-</div>
- 
+  );
+  // 바벨로 변환 결과
+  // return
+  // Didact.createElement("h1", {
+  //   onClick: function onClick() {
+  //     setState(function (c) {
+  //       return c + 1;
+  //     });
+  //   }
+  // }, "My Count: ", state);
+}
+
+const container = document.getElementById("root");
+const element = <Counter />;
+// var element = Didact.createElement(Counter, null); // 바벨로 변환된 결과
+// element {type: ƒ Counter() , props: {children: Array(0)}}
+
+Didact.render(element, container);
 */
 
 /*
@@ -375,9 +343,6 @@ const element = {
     type : h1,
     props: {
       onClick: () => setState((c) => c + 1),
-      style: {
-        backgroundColor: "lightblue",
-      },
       children: {
           type: "TEXT_ELEMENT",
           props: {
@@ -388,4 +353,24 @@ const element = {
       ),
     },
   };
+*/
+
+// <실행2> - html요소만 렌더
+/*
+const container = document.getElementById("root");
+
+Didact.render(
+  Didact.createElement(
+    "div",
+    null,
+    Didact.createElement(
+      "h1",
+      null,
+      Didact.createElement("p", null),
+      Didact.createElement("a", null)
+    ),
+    Didact.createElement("h2", null)
+  ),
+  container
+);
 */

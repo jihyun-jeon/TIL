@@ -267,9 +267,8 @@ const Didact = {
   useState,
 };
 
-/** @jsx Didact.createElement */
 /** @jsxRuntime classic /
-  /* @jsx Didact.createElement */
+/* @jsx Didact.createElement */
 function Counter() {
   const [state, setState] = Didact.useState(1);
   return <h1 onClick={() => setState((c) => c + 1)}>Demo Count: {state}</h1>;

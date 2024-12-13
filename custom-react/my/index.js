@@ -294,16 +294,89 @@ function useState(initial) {
   return [hook.state, setState];
 }
 
+function isDepsDiff(prevDeps, nextDeps) {
+  return prevDeps.some((d) => !nextDeps.includes(d));
+}
+
+function useMemo(calculateFn, currentDeps) {
+  const oldHook =
+    wipFiber.alternate &&
+    wipFiber.alternate.hooks &&
+    wipFiber.alternate.hooks[hookIndex];
+
+  const hook = {
+    value: oldHook ? oldHook.value : null,
+    deps: currentDeps,
+  };
+
+  if (
+    !oldHook ||
+    currentDeps.length === 0 ||
+    isDepsDiff(oldHook.deps, currentDeps)
+  ) {
+    hook.value = calculateFn();
+    hook.deps = currentDeps;
+    console.log("useMemo 재계산");
+  }
+
+  wipFiber.hooks.push(hook);
+  hookIndex++;
+  return hook.value;
+}
+
+function memo() {
+  //
+}
+
 const Didact = {
   createElement,
   render,
   useState,
+  useMemo,
 };
 
 /** @jsxRuntime classic /
 /* @jsx Didact.createElement */
 
 // -------------------------------------------------------
+
+// <실행> - useMemo
+let isPlusToggle = true;
+
+function Counter() {
+  const [state, setState] = Didact.useState(1);
+
+  const calcFn = useMemo(() => {
+    return state * 2;
+  }, [state]);
+
+  return (
+    <h1
+      onClick={() => {
+        setState((c) => c + (isPlusToggle ? 0 : 1));
+        isPlusToggle = !isPlusToggle;
+      }}
+    >
+      My Count: {state} , memoValue : {calcFn}
+    </h1>
+  );
+  // 바벨로 변환 결과
+  // return
+  // Didact.createElement("h1", {
+  //   onClick: function onClick() {
+  //     setState(function (c) {
+  //       return c + 1;
+  //     });
+  //   }
+  // }, "My Count: ", state , ",memoValue:", expensiveCalculation);
+}
+
+const container = document.getElementById("root");
+const element = <Counter />;
+// var element = Didact.createElement(Counter, null); // 바벨로 변환된 결과
+// element {type: ƒ Counter() , props: {children: Array(0)}}
+
+Didact.render(element, container);
 
 // <실행1> - useState
 /*

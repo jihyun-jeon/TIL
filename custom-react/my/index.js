@@ -324,8 +324,27 @@ function useMemo(calculateFn, currentDeps) {
   return hook.value;
 }
 
-function memo() {
-  //
+function isPropsEqual(prevProps, nextProps) {
+  if (!prevProps || !nextProps) return false;
+
+  const prevKeys = Object.keys(prevProps);
+  const nextKeys = Object.keys(nextProps);
+  if (prevKeys.length !== nextKeys.length) return false;
+
+  return prevKeys.every((key) => Object.is(prevProps[key], nextProps[key]));
+}
+
+function memo(component) {
+  return function memoizedComponent(nextProps) {
+    if (isPropsEqual(memoizedComponent.prevProps, nextProps)) {
+      return memoizedComponent.prevComponent;
+    }
+
+    console.log("memo 재계산");
+    memoizedComponent.prevProps = nextProps;
+    memoizedComponent.prevComponent = component(nextProps);
+    return memoizedComponent.prevComponent;
+  };
 }
 
 const Didact = {
@@ -333,14 +352,44 @@ const Didact = {
   render,
   useState,
   useMemo,
+  memo,
 };
 
 /** @jsxRuntime classic /
 /* @jsx Didact.createElement */
 
 // -------------------------------------------------------
+// <실행> React.memo
+const MemoizedCounter = Didact.memo(function Counter({ count }) {
+  return <div>Count: {count}</div>;
+});
+
+function App() {
+  const [count, setCount] = useState(0);
+  const [text, setText] = useState("");
+
+  return (
+    <div>
+      <MemoizedCounter count={count} />
+      <button onClick={() => setCount((c) => c + 1)}>Increment Count</button>
+      <input
+        type="text"
+        value={text}
+        onChange={(e) => setText(() => e.target.value)}
+      />
+    </div>
+  );
+}
+
+const container = document.getElementById("root");
+const element = <App />;
+// var element = Didact.createElement(Counter, null); // 바벨로 변환된 결과
+// element {type: ƒ Counter() , props: {children: Array(0)}}
+
+Didact.render(element, container);
 
 // <실행> - useMemo
+/*
 let isPlusToggle = true;
 
 function Counter() {
@@ -377,6 +426,7 @@ const element = <Counter />;
 // element {type: ƒ Counter() , props: {children: Array(0)}}
 
 Didact.render(element, container);
+*/
 
 // <실행1> - useState
 /*

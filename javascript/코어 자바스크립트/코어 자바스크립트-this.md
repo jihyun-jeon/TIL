@@ -144,7 +144,7 @@ console.log(circle1.diameter()); // 10
 console.log(circle2.diameter()); // 20
 ```
 
-![image.png](./assets//this.png)
+![image.png](../../assets//this.png)
 
 <br/><br/>
 

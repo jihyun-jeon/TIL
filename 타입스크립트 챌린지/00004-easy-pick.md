@@ -92,7 +92,7 @@ interface Expected2 {
 
 ### ✅ keyof
 
-- 객체 타입으로부터 그 객체의 프로퍼티명을 모아, 유니온 타입으로 만들어주는 연산자
+1. 객체 타입으로부터 그 객체의 프로퍼티명을 모아, 유니온 타입으로 만들어주는 연산자
     
     ```tsx
     type Human = {
@@ -102,6 +102,18 @@ interface Expected2 {
     
     type HumanKeys = keyof Human // name | age
     ```
+
+2. 주로 객체 타입에서 사용되지만, 배열이나 클래스 등도 사용할 수 있다.
+  - 키를 가지는 모든 타입에 대해 사용할 수 있는 것이다. 키-값 쌍을 가진 구조면 사용 가능하다.
+  
+- 배열에 사용 예
+    ```tsx
+    type ArrayType = string[];
+
+  type ArrayKeys = keyof ArrayType; 
+  // "length" | "push" | "pop" | "concat" | "join" | ...
+  ```
+ 
     
 ### ✅ extends
 

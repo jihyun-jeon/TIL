@@ -28,12 +28,12 @@ function Poodle(name, age, skill, speed) {
 // 프로토타입 체인을 통해 Poodle -> Dog -> Object 까지 연결되어 상속이 이뤄짐
 
 // [P1] [상속 구현 방법 1] Object.setPrototypeOf() 사용 (권장 방법)
-Object.setPrototypeOf(Poodle.prototype, Dog.prototype);
-Poodle.prototype.constructor = Poodle;
+Object.setPrototypeOf(Poodle.prototype, Dog.prototype); // 프로토타입 객체 교체
+Poodle.prototype.constructor = Poodle; // constructor 연결
 
 // [P1] [상속 구현 방법 2] Object.create() 사용 (권장 방법)
-Poodle.prototype = Object.create(Dog.prototype);
-Poodle.prototype.constructor = Poodle;
+Poodle.prototype = Object.create(Dog.prototype); // 프로토타입 객체 교체
+Poodle.prototype.constructor = Poodle; // constructor 연결
 
 Poodle.prototype.run = function () {
   console.log(`${this.name}는 ${this.speed}km 로 뜁니다.`);

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .red,
+      .green,
+      .blue {
+        position: absolute;
+        width: 100px;
+        color: white;
+        line-height: 100px;
+        text-align: center;
+        display: block;
+        width: 200px;
+        height: 200px;
+      }
+
+      .red {
+        z-index: 1;
+        top: 20px;
+        left: 20px;
+        background: red;
+      }
+
+      .green {
+        top: 60px;
+        left: 60px;
+        background: green;
+      }
+
+      .blue {
+        top: 100px;
+        left: 100px;
+        background: blue;
+      }
+
+      div:first-child {
+        opacity: 0.99;
+        /* opacity < 1이 적용되면 새로운 Stacking Context가 생성된다.
+           이로 인해 내부 요소인 .red의 z-index는 기존 문서의 stacking 순서에서 벗어나,
+           새롭게 형성된 Stacking Context 내부에서만 동작하게 되는 것 이다.
+           때문에 기존 문서의 다른 요소와 독립적으로 쌓여, 이전보다 뒤로가게 되는 것이다.
+           (기존의 z-index:1 이 더이상 먹히지 않음!)
+        */
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <span class="red">Red</span>
+    </div>
+
+    <div>
+      <span class="green">Green</span>
+    </div>
+
+    <div>
+      <span class="blue">Blue</span>
+    </div>
+  </body>
+</html>

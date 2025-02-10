@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      .container {
+        position: relative;
+        z-index: 1;
+        background: lightgray;
+        width: 200px;
+        height: 200px;
+      }
+
+      .child {
+        position: absolute;
+        z-index: 9999;
+        /*
+        부모 container가 position, z-index 설정으로 새로운 Stacking Context를 생성했기 때문에, 
+        자식 요소 child의 z-index는 부모의 영향 안에서만 동작한다.
+        때문에 자식(child)의 z-index가 9999여도 container보다 앞으로 나올 수 없음.
+        */
+        width: 150px;
+        height: 150px;
+        background: red;
+      }
+
+      .separate {
+        position: absolute;
+        top: 50px;
+        left: 50px;
+        width: 150px;
+        height: 150px;
+        background: blue;
+        /* transform이 적용되면서 새로운 Stacking Context이 생성됨.
+            때문에, container의 영향을 받지 않고 별도의 z-index 적용 가능한 것임 */
+        z-index: 9999;
+        transform: scale(1);
+        /* filter: brightness(1); */
+        /* clip-path: circle(50%); */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="child">Child</div>
+      <div class="separate">Transform</div>
+    </div>
+  </body>
+</html>
